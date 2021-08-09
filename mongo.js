@@ -14,7 +14,13 @@ const options = {
   useCreateIndex: true,
 };
 
-mongoose.connect(url, options);
+mongoose.connect(url, options)
+  .then(() => {
+    console.log("connected to MongoDB");
+  })
+  .catch((error) => {
+    console.log("error connecting to MongoDB:", error.message);
+  });
 
 // Define the schema for a phonebook entry
 const personSchema = new mongoose.Schema({

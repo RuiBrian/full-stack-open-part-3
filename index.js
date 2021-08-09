@@ -1,6 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const Person = require('./models/person');
+
 const app = express();
 
 app.use(express.static('build'));
@@ -17,61 +20,53 @@ app.use(morgan((tokens, req, res) => {
   ].join(' ');
 }));
 
-let contacts = [
-  {
-    "id": 1,
-    "name": "Arto Hellas",
-    "number": "040-123456"
-  },
-  {
-    "id": 2,
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523"
-  },
-  {
-    "id": 3,
-    "name": "Dan Abramov",
-    "number": "12-43-234345"
-  },
-  {
-    "id": 4,
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122"
-  }
-];
-
 const generateID = () => {
   return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 }
 
 app.get('/api/persons', (request, response) => {
-  response.json(contacts);
+  Person
+    .find({})
+    .then((persons) => {
+      response.json(persons);
+    });
 });
 
 app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const person = contacts.find((p) => p.id === id);
+  Person
+    .findById(request.params.id)
+    .then((person) => {
+      if (person) {
+        response.json(person);
+      } else {
+        response.status(404).end();
+      }
+    });
 
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).end();
-  }
 });
 
 app.get('/info', (request, response) => {
-  const numContacts = contacts.length;
-  const date = new Date();
-  const info = `<p>Phonebook has info for ${numContacts} ${numContacts === 1 ? 'person' : 'people'}</p>
-                <p>${new Date()}</p>`
-  response.send(info);
+  Person
+    .estimatedDocumentCount({})
+    .then((numContacts) => {
+      const info = `<p>Phonebook has info for ${numContacts} ${numContacts === 1 ? 'person' : 'people'}</p>
+                    <p>${new Date()}</p>`
+      response.send(info);
+    });
 });
 
 app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  contacts = contacts.filter(p => p.id !== id);
+  const id = request.params.id;
+  Person
+    .findByIdAndDelete(id)
+    .then((deletedPerson) => {
+      if (deletedPerson) {
+        response.status(204).end();
+      } else {
+        response.status(404).end();
+      }
+    });
 
-  response.status(204).end();
 });
 
 app.post('/api/persons', (request, response) => {
@@ -83,25 +78,19 @@ app.post('/api/persons', (request, response) => {
     });
   }
 
-  const existingContact = contacts.find(p => p.name === body.name);
-
-  if (existingContact) {
-    return response.status(400).json({
-      error: "The name must be unique"
-    });
-  }
-
-  const newContact = {
-    id: generateID(),
+  const newContact = new Person({
     name: body.name,
-    number: body.number
-  }
+    number: body.number,
+  });
 
-  contacts = contacts.concat(newContact);
-  response.json(newContact);
+  newContact
+    .save()
+    .then((result) => {
+      response.json(result);
+    });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 })
