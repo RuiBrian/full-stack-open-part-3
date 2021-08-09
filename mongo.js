@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 if (process.argv.length < 3) {
-	console.log("Incorrect number of arguments");
-	process.exit(1);
+  console.log('Incorrect number of arguments');
+  process.exit(1);
 }
 
 const password = process.argv[2];
@@ -16,10 +16,10 @@ const options = {
 
 mongoose.connect(url, options)
   .then(() => {
-    console.log("connected to MongoDB");
+    console.log('connected to MongoDB');
   })
   .catch((error) => {
-    console.log("error connecting to MongoDB:", error.message);
+    console.log('error connecting to MongoDB:', error.message);
   });
 
 // Define the schema for a phonebook entry
@@ -51,7 +51,7 @@ if (process.argv.length === 3) {
   });
 
   // Save to database
-  person.save().then((result) => {
+  person.save().then(() => {
     console.log(`added ${name}: ${number} to the phonebook`);
     mongoose.connection.close();
   });

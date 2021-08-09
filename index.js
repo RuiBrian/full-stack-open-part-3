@@ -25,7 +25,7 @@ app.get('/api/persons', (request, response) => {
     .find({})
     .then((persons) => {
       response.json(persons);
-    })
+    });
 });
 
 app.get('/api/persons/:id', (request, response, next) => {
@@ -46,7 +46,7 @@ app.get('/info', (request, response, next) => {
     .estimatedDocumentCount({})
     .then((numContacts) => {
       const info = `<p>Phonebook has info for ${numContacts} ${numContacts === 1 ? 'person' : 'people'}</p>
-                    <p>${new Date()}</p>`
+                    <p>${new Date()}</p>`;
       response.send(info);
     })
     .catch(error => next(error));
@@ -71,7 +71,7 @@ app.post('/api/persons', (request, response, next) => {
 
   if (!body.name || !body.number) {
     return response.status(400).json({
-      error: "The name or number is missing"
+      error: 'The name or number is missing'
     });
   }
 
@@ -95,15 +95,14 @@ app.put('/api/persons/:id', (request, response, next) => {
   const newContact = {
     name: body.name,
     number: body.number,
-  }
+  };
 
   Person
     .findByIdAndUpdate(id, newContact, { runValidators: true, new: true, context: 'query' })
     .then((result) => {
       response.json(result);
     })
-    .catch(error => 
-    {
+    .catch(error => {
       next(error);
       console.log(newContact);
     });
@@ -119,7 +118,7 @@ const errorHandler = (error, request, response, next) => {
   }
 
   next(error);
-}
+};
 
 app.use(errorHandler);
 
