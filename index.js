@@ -98,11 +98,15 @@ app.put('/api/persons/:id', (request, response, next) => {
   }
 
   Person
-    .findByIdAndUpdate(id, newContact, { runValidators: true, new: true })
+    .findByIdAndUpdate(id, newContact, { runValidators: true, new: true, context: 'query' })
     .then((result) => {
       response.json(result);
     })
-    .catch(error => next(error));
+    .catch(error => 
+    {
+      next(error);
+      console.log(newContact);
+    });
 });
 
 const errorHandler = (error, request, response, next) => {
