@@ -20,19 +20,15 @@ app.use(morgan((tokens, req, res) => {
   ].join(' ');
 }));
 
-const generateID = () => {
-  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-}
-
 app.get('/api/persons', (request, response) => {
   Person
     .find({})
     .then((persons) => {
       response.json(persons);
-    });
+    })
 });
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
   Person
     .findById(request.params.id)
     .then((person) => {
@@ -41,21 +37,22 @@ app.get('/api/persons/:id', (request, response) => {
       } else {
         response.status(404).end();
       }
-    });
-
+    })
+    .catch(error => next(error));
 });
 
-app.get('/info', (request, response) => {
+app.get('/info', (request, response, next) => {
   Person
     .estimatedDocumentCount({})
     .then((numContacts) => {
       const info = `<p>Phonebook has info for ${numContacts} ${numContacts === 1 ? 'person' : 'people'}</p>
                     <p>${new Date()}</p>`
       response.send(info);
-    });
+    })
+    .catch(error => next(error));
 });
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   const id = request.params.id;
   Person
     .findByIdAndDelete(id)
@@ -65,11 +62,11 @@ app.delete('/api/persons/:id', (request, response) => {
       } else {
         response.status(404).end();
       }
-    });
-
+    })
+    .catch(error => next(error));
 });
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body;
 
   if (!body.name || !body.number) {
@@ -87,10 +84,40 @@ app.post('/api/persons', (request, response) => {
     .save()
     .then((result) => {
       response.json(result);
-    });
+    })
+    .catch(error => next(error));
 });
+
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body;
+  const id = request.params.id;
+
+  const newContact = {
+    name: body.name,
+    number: body.number,
+  }
+
+  Person
+    .findByIdAndUpdate(id, newContact, { new: true })
+    .then((result) => {
+      response.json(result);
+    })
+    .catch(error => next(error));
+});
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' });
+  }
+
+  next(error);
+}
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-})
+});
